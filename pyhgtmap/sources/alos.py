@@ -100,25 +100,28 @@ class Alos(Source):
             timeout=timeout,
         )
         r = client.get(url)
-        with ZipFile(
-            io.BytesIO(cast(bytes, r.content)),
-        ) as zip_archive:
-            # Look for DSM file, which should be in the form "N017E045/ALPSMLC30_N017E045_DSM.tif"
-            dsm_files: list[ZipInfo] = [
-                x for x in zip_archive.filelist if x.filename.endswith("_DSM.tif")
-            ]
-            if not dsm_files:
-                raise ValueError(f"DSM file not found in {url}")
-            if len(dsm_files) > 1:
-                raise ValueError(f"Multiple DSM files found in {url}")
-            with (
-                zip_archive.open(dsm_files[0]) as hgt_file_in,
-                open(
-                    output_file_name,
-                    mode="wb",
-                ) as hgt_file_out,
-            ):
-                hgt_file_out.write(hgt_file_in.read())
+        try:
+            with ZipFile(
+                io.BytesIO(cast(bytes, r.content)),
+            ) as zip_archive:
+                # Look for DSM file, which should be in the form "N017E045/ALPSMLC30_N017E045_DSM.tif"
+                dsm_files: list[ZipInfo] = [
+                    x for x in zip_archive.filelist if x.filename.endswith("_DSM.tif")
+                ]
+                if not dsm_files:
+                    raise ValueError(f"DSM file not found in {url}")
+                if len(dsm_files) > 1:
+                    raise ValueError(f"Multiple DSM files found in {url}")
+                with (
+                    zip_archive.open(dsm_files[0]) as hgt_file_in,
+                    open(
+                        output_file_name,
+                        mode="wb",
+                    ) as hgt_file_out,
+                ):
+                    hgt_file_out.write(hgt_file_in.read())
+        except:
+            raise ValueError(f"DSM zip file not found {url}")
         # TODO
 
     @staticmethod
